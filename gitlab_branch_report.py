@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
-
 import os
 import sys
 from datetime import datetime
 import gitlab
 from dateutil import parser
-from tabulate import tabulate
+import jinja2
+import webbrowser
 
 def get_gitlab_connection():
     """Create a GitLab connection using personal access token."""
@@ -59,6 +58,119 @@ def get_branch_details(project, branch_name):
         print(f"Error getting branch details: {e}")
         return None
 
+def generate_html_report(report_data, group_path):
+    """Generate an HTML report from the branch data."""
+    template = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GitLab Branch Report - {{ group_path }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2f2f2f;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4a4a4a;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .timestamp {
+            text-align: right;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+        a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GitLab Branch Report - {{ group_path }}</h1>
+        <table>
+            <thead>
+                <tr>
+                    {% for header in headers %}
+                    <th>{{ header }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    {% for cell in row %}
+                    <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="timestamp">
+            Report generated on: {{ timestamp }}
+        </div>
+    </div>
+</body>
+</html>
+    """
+    
+    headers = ['Project', 'Branch', 'Last Commit Author', 'Last Commit Date', 
+              'Protected', 'Merged Into', 'Merge Request']
+    
+    # Create Jinja2 environment and template
+    env = jinja2.Environment()
+    template = env.from_string(template)
+    
+    # Generate HTML
+    html_content = template.render(
+        headers=headers,
+        data=report_data,
+        group_path=group_path,
+        timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    )
+    
+    # Write to file
+    output_file = f'gitlab_branch_report_{group_path.replace("/", "_")}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+    
+    # Get absolute path for the file
+    abs_path = os.path.abspath(output_file)
+    return abs_path
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: python gitlab_branch_report.py <group_path>")
@@ -99,10 +211,12 @@ def main():
                         details['merge_request'] if details['merge_request'] else 'No'
                     ])
         
-        # Print the report
-        headers = ['Project', 'Branch', 'Last Commit Author', 'Last Commit Date', 
-                  'Protected', 'Merged Into', 'Merge Request']
-        print("\n" + tabulate(report_data, headers=headers, tablefmt='grid'))
+        # Generate HTML report and open it in browser
+        output_file = generate_html_report(report_data, group_path)
+        print(f"\nReport generated successfully: {output_file}")
+        
+        # Open the report in the default web browser
+        webbrowser.open('file://' + output_file)
         
     except gitlab.exceptions.GitlabError as e:
         print(f"Error: {e}")
