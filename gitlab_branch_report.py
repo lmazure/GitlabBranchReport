@@ -43,7 +43,7 @@ def get_branch_details(project, branch_name):
         
         if mrs:
             mr = mrs[0]  # Get the first MR (most recent)
-            mr_info = f"!{mr.iid} ({mr.web_url})"
+            mr_info = f"<A HREF='{mr.web_url}' TARGET='_blank'>!{mr.iid}</A>"
             if mr.state == 'merged':
                 merged_into = mr.target_branch
         
@@ -228,8 +228,8 @@ def main():
                         details['last_commit_author'],
                         details['last_commit_date'].strftime('%Y-%m-%d %H:%M:%S'),
                         'Yes' if details['is_protected'] else 'No',
-                        details['merged_into'] if details['merged_into'] else 'No',
-                        details['merge_request'] if details['merge_request'] else 'No'
+                        details['merged_into'] if details['merged_into'] else '',
+                        details['merge_request'] if details['merge_request'] else ''
                     ])
         
         # Generate HTML report and open it in browser

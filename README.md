@@ -11,15 +11,6 @@ For each branch, the report includes:
 - Merge status (if merged, which branch it was merged into)
 - Associated Merge Request (if any)
 
-## Requirements
-
-- Python 3.6+
-- GitLab access token with appropriate permissions
-- Required Python packages (install via `pip install -r requirements.txt`):
-  - python-gitlab
-  - python-dateutil
-  - tabulate
-
 ## Setup
 
 1. Install the required packages:
