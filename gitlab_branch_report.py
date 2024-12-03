@@ -58,6 +58,25 @@ def get_branch_details(project, branch_name):
         print(f"Error getting branch details: {e}")
         return None
 
+def get_all_projects(gl, group):
+    """Recursively get all projects from a group and its subgroups."""
+    print(f"Getting projects from group: {group.full_path}")
+    
+    projects = []
+    
+    # Get direct projects from this group
+    projects.extend(group.projects.list(all=True))
+    
+    # Get subgroups and their projects
+    subgroups = group.subgroups.list(all=True)
+    for subgroup in subgroups:
+        # Get the full subgroup object
+        full_subgroup = gl.groups.get(subgroup.id)
+        # Recursively get projects from subgroup
+        projects.extend(get_all_projects(gl, full_subgroup))
+    
+    return projects
+
 def generate_html_report(report_data, group_path):
     """Generate an HTML report from the branch data."""
     template = """
@@ -183,15 +202,17 @@ def main():
         # Get the group
         group = gl.groups.get(group_path)
         
-        # Get all projects in the group
-        projects = group.projects.list(all=True)
+        # Get all projects recursively
+        print("\nFetching all projects from group and subgroups...")
+        all_projects = get_all_projects(gl, group)
+        print(f"Found {len(all_projects)} projects in total")
         
         report_data = []
         
-        for project in projects:
+        for project in all_projects:
             # Get the full project object
             proj = gl.projects.get(project.id)
-            print(f"\nProcessing project: {proj.name}")
+            print(f"\nProcessing project: {proj.path_with_namespace}")
             
             # Get all branches
             branches = proj.branches.list(all=True)
@@ -202,7 +223,7 @@ def main():
                 
                 if details:
                     report_data.append([
-                        proj.name,
+                        proj.path_with_namespace,  
                         branch.name,
                         details['last_commit_author'],
                         details['last_commit_date'].strftime('%Y-%m-%d %H:%M:%S'),
