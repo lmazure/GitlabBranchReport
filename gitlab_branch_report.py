@@ -223,8 +223,8 @@ def main():
                 
                 if details:
                     report_data.append([
-                        proj.path_with_namespace,  
-                        branch.name,
+                        f"<A HREF='{proj.web_url}' TARGET='_blank'>{proj.path_with_namespace}</A>",
+                        f"<A HREF='{proj.web_url}/tree/{branch.name}' TARGET='_blank'>{branch.name}</A>",
                         details['last_commit_author'],
                         details['last_commit_date'].strftime('%Y-%m-%d %H:%M:%S'),
                         'Yes' if details['is_protected'] else 'No',

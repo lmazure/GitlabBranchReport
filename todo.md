@@ -1,4 +1,4 @@
-- The project name should be a hyperlink
-- The branch name should be a hyperlink
+- ~~The project name should be a hyperlink~~
+- ~~The branch name should be a hyperlink~~
 - ~~The MR should be a hyperlink~~
 - Some projects generate a 403
