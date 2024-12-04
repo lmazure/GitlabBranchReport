@@ -1,4 +1,6 @@
 - ~~The project name should be a hyperlink~~
 - ~~The branch name should be a hyperlink~~
 - ~~The MR should be a hyperlink~~
+- add branch creation date
+- add branch creation author
 - Some projects generate a 403
