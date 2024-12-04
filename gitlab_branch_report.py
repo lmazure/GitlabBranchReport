@@ -65,15 +65,28 @@ def get_all_projects_of_group(gl, group):
     projects = []
     
     # Get direct projects from this group
-    projects.extend(group.projects.list(all=True))
+    try:
+        groups = group.projects.list(all=True)
+    except gitlab.exceptions.GitlabError as e:
+        print(f"Error getting projects of group {group.full_path}: {e}")
+        sys.exit(1)
+    projects.extend(groups)
     
     # Get subgroups and their projects
-    subgroups = group.subgroups.list(all=True)
+    try:
+        subgroups = group.subgroups.list(all=True)
+    except gitlab.exceptions.GitlabError as e:
+        print(f"Error getting subgroups of group {group.full_path}: {e}")
+        sys.exit(1)
     for subgroup in subgroups:
         # Get the full subgroup object
-        full_subgroup = gl.groups.get(subgroup.id)
+        try:
+            full_subgroup = gl.groups.get(subgroup.id)
+        except gitlab.exceptions.GitlabError as e:
+            print(f"Error getting group {subgroup.id}: {e}")
+            sys.exit(1)
         # Recursively get projects from subgroup
-        projects.extend(get_all_projects(gl, full_subgroup))
+        projects.extend(get_all_projects_of_group(gl, full_subgroup))
     
     return projects
 
@@ -84,7 +97,11 @@ def get_all_projects(gl, path):
         return [project]
     except gitlab.exceptions.GitlabGetError:
         # If not a project, try as group
-        group = gl.groups.get(path)
+        try:
+            group = gl.groups.get(path)
+        except gitlab.exceptions.GitlabGetError as e:
+            print(f"Error while getting group {path}: {e}")
+            sys.exit(1)
         return get_all_projects_of_group(gl, group)
 
 def generate_html_report(report_data, path_name):
@@ -193,7 +210,7 @@ def generate_html_report(report_data, path_name):
     """
     
     headers = ['Project', 'Branch', 'Last Commit Author', 'Last Commit Date', 
-              'Protected', 'Merged Into', 'MR']
+               'Protected', 'Merged Into', 'MR']
     
     # Create Jinja2 environment and template
     env = jinja2.Environment()
@@ -260,8 +277,6 @@ def main():
         # Generate HTML report and open it in browser
         output_file = generate_html_report(report_data, path)
         print(f"\nReport generated successfully: {output_file}")
-        
-        # Open the report in the default web browser
         webbrowser.open('file://' + output_file)
         
     except gitlab.exceptions.GitlabError as e:

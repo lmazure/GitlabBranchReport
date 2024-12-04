@@ -4,4 +4,4 @@
 - ~~The MR should be a hyperlink~~
 - Add branch creation date
 - Add branch creation author
-- Some projects generate a 403
+- ~~Some projects generate a 403, e.g. `henixdevelopment/sandbox/sandbox-projet/squash-tm-mirror`~~
