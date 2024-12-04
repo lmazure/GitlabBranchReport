@@ -58,7 +58,7 @@ def get_branch_details(project, branch_name):
         print(f"Error getting branch details: {e}")
         return None
 
-def get_all_projects(gl, group):
+def get_all_projects_of_group(gl, group):
     """Recursively get all projects from a group and its subgroups."""
     print(f"Getting projects from group: {group.full_path}")
     
@@ -77,13 +77,23 @@ def get_all_projects(gl, group):
     
     return projects
 
-def generate_html_report(report_data, group_path):
+def get_all_projects(gl, path):
+    try:
+        # If path is a project, return it
+        project = gl.projects.get(path)
+        return [project]
+    except gitlab.exceptions.GitlabGetError:
+        # If not a project, try as group
+        group = gl.groups.get(path)
+        return get_all_projects_of_group(gl, group)
+
+def generate_html_report(report_data, path_name):
     """Generate an HTML report from the branch data."""
     template = """
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GitLab Branch Report - {{ group_path }}</title>
+    <title>GitLab Branch Report - {{ path_name }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -139,7 +149,7 @@ def generate_html_report(report_data, group_path):
 </head>
 <body>
     <div class="container">
-        <h1>GitLab Branch Report - {{ group_path }}</h1>
+        <h1>GitLab Branch Report - {{ path_name }}</h1>
         <table>
             <thead>
                 <tr>
@@ -177,12 +187,12 @@ def generate_html_report(report_data, group_path):
     html_content = template.render(
         headers=headers,
         data=report_data,
-        group_path=group_path,
+        path_name=path_name,
         timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     )
     
     # Write to file
-    output_file = f'gitlab_branch_report_{group_path.replace("/", "_")}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
+    output_file = f'gitlab_branch_report_{path_name.replace("/", "_")}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
     
@@ -192,19 +202,18 @@ def generate_html_report(report_data, group_path):
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python gitlab_branch_report.py <group_path>")
+        print("Usage: python gitlab_branch_report.py <group-or-project-path>")
+        print("Examples:")
+        print("  python gitlab_branch_report.py mygroup")
+        print("  python gitlab_branch_report.py mygroup/myproject")
         sys.exit(1)
     
-    group_path = sys.argv[1]
+    path = sys.argv[1]
     gl = get_gitlab_connection()
     
     try:
-        # Get the group
-        group = gl.groups.get(group_path)
-        
-        # Get all projects recursively
-        print("\nFetching all projects from group and subgroups...")
-        all_projects = get_all_projects(gl, group)
+        # Get all projects (single project or all projects in group)
+        all_projects = get_all_projects(gl, path)
         print(f"Found {len(all_projects)} projects in total")
         
         report_data = []
@@ -233,7 +242,7 @@ def main():
                     ])
         
         # Generate HTML report and open it in browser
-        output_file = generate_html_report(report_data, group_path)
+        output_file = generate_html_report(report_data, path)
         print(f"\nReport generated successfully: {output_file}")
         
         # Open the report in the default web browser
