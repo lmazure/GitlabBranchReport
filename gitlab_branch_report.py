@@ -101,7 +101,7 @@ def generate_html_report(report_data, path_name):
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 1200px;
+            width: 98%;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -116,21 +116,36 @@ def generate_html_report(report_data, path_name):
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            table-layout: auto;
         }
         th, td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .project-path {
+            direction: rtl;
+            text-align: left;
         }
         th {
             background-color: #4a4a4a;
             color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
         tr:hover {
             background-color: #f5f5f5;
+        }
+        td:hover {
+            white-space: normal;
+            word-wrap: break-word;
         }
         .timestamp {
             text-align: right;
@@ -161,7 +176,8 @@ def generate_html_report(report_data, path_name):
             <tbody>
                 {% for row in data %}
                 <tr>
-                    {% for cell in row %}
+                    <td class="project-path">{{ row[0] }}</td>
+                    {% for cell in row[1:] %}
                     <td>{{ cell }}</td>
                     {% endfor %}
                 </tr>
@@ -177,7 +193,7 @@ def generate_html_report(report_data, path_name):
     """
     
     headers = ['Project', 'Branch', 'Last Commit Author', 'Last Commit Date', 
-              'Protected', 'Merged Into', 'Merge Request']
+              'Protected', 'Merged Into', 'MR']
     
     # Create Jinja2 environment and template
     env = jinja2.Environment()
