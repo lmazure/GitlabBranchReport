@@ -160,6 +160,18 @@ def generate_html_report(report_data, path_name):
             color: #2f2f2f;
             margin-bottom: 20px;
         }
+        .controls {
+            margin: 20px 0;
+        }
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            margin-right: 20px;
+        }
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 8px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -208,11 +220,20 @@ def generate_html_report(report_data, path_name):
         a:hover {
             text-decoration: underline;
         }
+        tr.protected-branch {
+            /* No special styling needed, used for filtering */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>GitLab Branch Report - {{ path_name }}</h1>
+        <div class="controls">
+            <label class="checkbox-label">
+                <input type="checkbox" id="hideProtectedBranches" checked>
+                Hide protected branches
+            </label>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -223,7 +244,7 @@ def generate_html_report(report_data, path_name):
             </thead>
             <tbody>
                 {% for row in data %}
-                <tr>
+                <tr class="{{ 'protected-branch' if row[4] == 'Yes' }}" style="{{ 'display: none;' if row[4] == 'Yes' }}">
                     <td class="project-path">{{ row[0] }}</td>
                     {% for cell in row[1:] %}
                     <td>{{ cell }}</td>
@@ -236,6 +257,23 @@ def generate_html_report(report_data, path_name):
             Report generated on: {{ timestamp }}
         </div>
     </div>
+    <script>
+        // Function to toggle protected branches visibility
+        function toggleProtectedBranches(hide) {
+            const protectedBranches = document.querySelectorAll('.protected-branch');
+            protectedBranches.forEach(row => {
+                row.style.display = hide ? 'none' : '';
+            });
+        }
+
+        // Set up checkbox event listener
+        document.getElementById('hideProtectedBranches').addEventListener('change', function(e) {
+            toggleProtectedBranches(e.target.checked);
+        });
+
+        // Hide protected branches on page load (checkbox is checked by default)
+        toggleProtectedBranches(true);
+    </script>
 </body>
 </html>
     """
