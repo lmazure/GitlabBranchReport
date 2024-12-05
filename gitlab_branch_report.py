@@ -33,7 +33,7 @@ def get_branch_details(project, branch_name):
         
         # Get the commit details
         commit = branch.commit
-        last_commit_author = commit['author_name']
+        last_committer = commit['committer_name']
         last_commit_date = parser.parse(commit['committed_date'])
         
         # Get merge requests associated with this branch
@@ -48,7 +48,7 @@ def get_branch_details(project, branch_name):
                 merged_into = mr.target_branch
         
         return {
-            'last_commit_author': last_commit_author,
+            'last_committer': last_committer,
             'last_commit_date': last_commit_date,
             'is_protected': is_protected,
             'merged_into': merged_into,
@@ -63,7 +63,11 @@ def get_details_of_all_branches_of_project(project):
     branch_data = []
 
     # Get all branches
-    branches = project.branches.list(all=True)
+    try:
+        branches = project.branches.list(all=True)
+    except gitlab.exceptions.GitlabError as e:
+        print(f"Error getting branches of project {project.path_with_namespace}: {e}")
+        sys.exit(1)
     
     for branch in branches:
         print(f"Processing branch: {branch.name}")
@@ -73,7 +77,7 @@ def get_details_of_all_branches_of_project(project):
             branch_data.append([
                 f"<A HREF='{project.web_url}' TARGET='_blank'>{project.path_with_namespace}</A>",
                 f"<A HREF='{project.web_url}/tree/{branch.name}' TARGET='_blank'>{branch.name}</A>",
-                details['last_commit_author'],
+                details['last_committer'],
                 details['last_commit_date'].strftime('%Y-%m-%d %H:%M:%S'),
                 'Yes' if details['is_protected'] else 'No',
                 details['merged_into'] if details['merged_into'] else '',
@@ -236,7 +240,7 @@ def generate_html_report(report_data, path_name):
 </html>
     """
     
-    headers = ['Project', 'Branch', 'Last Commit Author', 'Last Commit Date', 
+    headers = ['Project', 'Branch', 'Last Committer', 'Last Commit Date', 
                'Protected', 'Merged Into', 'MR']
     
     # Create Jinja2 environment and template

@@ -1,3 +1,3 @@
-- Display committer rather than author of last commit
 - Add filter on last commit date (60 days by default)
 - Add filter to not display protected branches (on by default)
+- Display status of the Merge Request associated with each branch
