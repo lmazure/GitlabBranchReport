@@ -153,16 +153,16 @@ def generate_html_report(report_data, path_name):
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
             background-color: #f5f5f5;
         }
         .container {
-            width: 98%;
-            margin: 0 auto;
+            width: 100%;
+            margin: 0;
             background-color: white;
             padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-sizing: border-box;
         }
         h1 {
             color: #2f2f2f;
@@ -200,19 +200,39 @@ def generate_html_report(report_data, path_name):
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            table-layout: auto;
+            table-layout: fixed;
         }
         th, td {
             padding: 12px;
-            text-align: left;
             border-bottom: 1px solid #ddd;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .project-path {
+        /* Column widths */
+        th:nth-child(1), td:nth-child(1) { /* Project column */
+            width: 30%;
             direction: rtl;
             text-align: left;
+        }
+        th:nth-child(2), td:nth-child(2) { /* Branch column */
+            width: 25%;
+            direction: ltr;
+            text-align: left;
+        }
+        .project-cell {
+            direction: rtl;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .branch-cell {
+            direction: ltr;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         th {
             background-color: #4a4a4a;
@@ -298,10 +318,13 @@ def generate_html_report(report_data, path_name):
                 <tr class="{{ 'protected-branch' if row[4] == 'Yes' }}" 
                     data-commit-date="{{ row[3] }}"
                     style="{{ 'display: none;' if row[4] == 'Yes' }}">
-                    <td class="project-path">{{ row[0] }}</td>
-                    {% for cell in row[1:7] %}
-                    <td>{{ cell }}</td>
-                    {% endfor %}
+                    <td class="project-cell">{{ row[0] }}</td>
+                    <td class="branch-cell">{{ row[1] }}</td>
+                    <td>{{ row[2] }}</td>
+                    <td>{{ row[3] }}</td>
+                    <td>{{ row[4] }}</td>
+                    <td>{{ row[5] }}</td>
+                    <td>{{ row[6] }}</td>
                     <td>
                         {% if row[7] %}
                         <span class="mr-state mr-state-{{ row[7] }}">{{ row[7] }}</span>
