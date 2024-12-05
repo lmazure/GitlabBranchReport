@@ -1,17 +1,21 @@
+# Standard library imports
+import argparse
 import os
 import sys
-from datetime import datetime
-import gitlab
-from dateutil import parser
-import jinja2
 import webbrowser
+from datetime import datetime
+
+# Third-party imports
+from dateutil import parser
+import gitlab
+import jinja2
 
 def get_gitlab_connection():
     """Create a GitLab connection using personal access token."""
     # Get token from environment variable for security
     token = os.getenv('GITLAB_TOKEN')
     if not token:
-        print("Error: GITLAB_TOKEN environment variable not set")
+        print("Error: GITLAB_TOKEN environment variable not set", flush=True)
         sys.exit(1)
     
     # Get GitLab URL, default to gitlab.com
@@ -20,7 +24,7 @@ def get_gitlab_connection():
     try:
         return gitlab.Gitlab(gitlab_url, private_token=token)
     except Exception as e:
-        print(f"Error connecting to GitLab: {e}")
+        print(f"Error connecting to GitLab: {e}", flush=True)
         sys.exit(1)
 
 def get_branch_details(project, branch_name):
@@ -58,7 +62,7 @@ def get_branch_details(project, branch_name):
             'mr_state': mr_state
         }
     except gitlab.exceptions.GitlabError as e:
-        print(f"Error getting branch details: {e}")
+        print(f"Error getting branch details: {e}", flush=True)
         return None
 
 def get_details_of_all_branches_of_project(project):
@@ -69,11 +73,11 @@ def get_details_of_all_branches_of_project(project):
     try:
         branches = project.branches.list(all=True)
     except gitlab.exceptions.GitlabError as e:
-        print(f"Error getting branches of project {project.path_with_namespace}: {e}")
+        print(f"Error getting branches of project {project.path_with_namespace}: {e}", flush=True)
         sys.exit(1)
     
     for branch in branches:
-        print(f"Processing branch: {branch.name}")
+        print(f"Processing branch: {branch.name}", flush=True)
         details = get_branch_details(project, branch.name)
     
         if details:
@@ -95,7 +99,7 @@ def get_details_of_all_branches_of_project(project):
 
 def get_all_projects_of_group(gl, group):
     """Recursively get all projects from a group and its subgroups."""
-    print(f"Getting projects from group: {group.full_path}")
+    print(f"Getting projects from group: {group.full_path}", flush=True)
     
     projects = []
     
@@ -103,7 +107,7 @@ def get_all_projects_of_group(gl, group):
     try:
         groups = group.projects.list(all=True)
     except gitlab.exceptions.GitlabError as e:
-        print(f"Error getting projects of group {group.full_path}: {e}")
+        print(f"Error getting projects of group {group.full_path}: {e}", flush=True)
         sys.exit(1)
     projects.extend(groups)
     
@@ -111,14 +115,14 @@ def get_all_projects_of_group(gl, group):
     try:
         subgroups = group.subgroups.list(all=True)
     except gitlab.exceptions.GitlabError as e:
-        print(f"Error getting subgroups of group {group.full_path}: {e}")
+        print(f"Error getting subgroups of group {group.full_path}: {e}", flush=True)
         sys.exit(1)
     for subgroup in subgroups:
         # Get the full subgroup object
         try:
             full_subgroup = gl.groups.get(subgroup.id)
         except gitlab.exceptions.GitlabError as e:
-            print(f"Error getting group {subgroup.id}: {e}")
+            print(f"Error getting group {subgroup.id}: {e}", flush=True)
             sys.exit(1)
         # Recursively get projects from subgroup
         projects.extend(get_all_projects_of_group(gl, full_subgroup))
@@ -135,7 +139,7 @@ def get_all_projects(gl, path):
         try:
             group = gl.groups.get(path)
         except gitlab.exceptions.GitlabGetError as e:
-            print(f"Error while getting group {path}: {e}")
+            print(f"Error while getting group {path}: {e}", flush=True)
             sys.exit(1)
         return get_all_projects_of_group(gl, group)
 
@@ -395,7 +399,7 @@ def generate_html_report(report_data, path_name):
     )
     
     # Write to file
-    output_file = f'gitlab_branch_report_{path_name.replace("/", "_")}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
+    output_file = 'gitlab_branch_report.html'
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
     
@@ -404,36 +408,36 @@ def generate_html_report(report_data, path_name):
     return abs_path
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python gitlab_branch_report.py <group-or-project-path>")
-        print("Examples:")
-        print("  python gitlab_branch_report.py mygroup")
-        print("  python gitlab_branch_report.py mygroup/myproject")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='Generate GitLab branch report')
+    parser.add_argument('path', help='Group or project path (e.g., mygroup or mygroup/myproject)')
+    parser.add_argument('-d', '--display', action='store_true', help='Open the report in browser after generation')
+    args = parser.parse_args()
     
-    path = sys.argv[1]
     gl = get_gitlab_connection()
     
     try:
         # Get all projects (single project or all projects in group)
-        all_projects = get_all_projects(gl, path)
-        print(f"Found {len(all_projects)} projects in total")
+        all_projects = get_all_projects(gl, args.path)
+        print(f"Found {len(all_projects)} projects in total", flush=True)
         
         report_data = []
         
         for project in all_projects:
             # Get the full project object
             proj = gl.projects.get(project.id)
-            print(f"\nProcessing project: {proj.path_with_namespace}")
+            print(f"\nProcessing project: {proj.path_with_namespace}", flush=True)
             report_data.extend(get_details_of_all_branches_of_project(proj))
 
-        # Generate HTML report and open it in browser
-        output_file = generate_html_report(report_data, path)
-        print(f"\nReport generated successfully: {output_file}")
-        webbrowser.open('file://' + output_file)
+        # Generate HTML report
+        output_file = generate_html_report(report_data, args.path)
+        print(f"\nReport generated successfully: {output_file}", flush=True)
+        
+        # Only open in browser if -d flag is used
+        if args.display:
+            webbrowser.open('file://' + output_file)
         
     except gitlab.exceptions.GitlabError as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}", flush=True)
         sys.exit(1)
 
 if __name__ == '__main__':

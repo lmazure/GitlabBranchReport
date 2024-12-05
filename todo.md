@@ -1,1 +1,0 @@
-- Display status of the Merge Request associated with each branch
