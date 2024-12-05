@@ -39,11 +39,13 @@ def get_branch_details(project, branch_name):
         # Get merge requests associated with this branch
         mrs = project.mergerequests.list(source_branch=branch_name, state='all')
         mr_info = None
+        mr_state = None
         merged_into = None
         
         if mrs:
             mr = mrs[0]  # Get the first MR (most recent)
             mr_info = f"<A HREF='{mr.web_url}' TARGET='_blank'>!{mr.iid}</A>"
+            mr_state = mr.state
             if mr.state == 'merged':
                 merged_into = mr.target_branch
         
@@ -52,7 +54,8 @@ def get_branch_details(project, branch_name):
             'last_commit_date': last_commit_date,
             'is_protected': is_protected,
             'merged_into': merged_into,
-            'merge_request': mr_info
+            'merge_request': mr_info,
+            'mr_state': mr_state
         }
     except gitlab.exceptions.GitlabError as e:
         print(f"Error getting branch details: {e}")
@@ -81,7 +84,8 @@ def get_details_of_all_branches_of_project(project):
                 details['last_commit_date'].strftime('%Y-%m-%d %H:%M:%S'),
                 'Yes' if details['is_protected'] else 'No',
                 details['merged_into'] if details['merged_into'] else '',
-                details['merge_request'] if details['merge_request'] else ''
+                details['merge_request'] if details['merge_request'] else '',
+                details['mr_state'] if details['mr_state'] else ''
             ])
 
     # Sort branch data by commit date (oldest first)
@@ -239,6 +243,25 @@ def generate_html_report(report_data, path_name):
         tr.protected-branch {
             /* No special styling needed, used for filtering */
         }
+        .mr-state {
+            text-transform: capitalize;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .mr-state-opened {
+            background-color: #2da44e;
+            color: white;
+        }
+        .mr-state-closed {
+            background-color: #cf222e;
+            color: white;
+        }
+        .mr-state-merged {
+            background-color: #8250df;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -272,9 +295,14 @@ def generate_html_report(report_data, path_name):
                     data-commit-date="{{ row[3] }}"
                     style="{{ 'display: none;' if row[4] == 'Yes' }}">
                     <td class="project-path">{{ row[0] }}</td>
-                    {% for cell in row[1:] %}
+                    {% for cell in row[1:7] %}
                     <td>{{ cell }}</td>
                     {% endfor %}
+                    <td>
+                        {% if row[7] %}
+                        <span class="mr-state mr-state-{{ row[7] }}">{{ row[7] }}</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -352,7 +380,7 @@ def generate_html_report(report_data, path_name):
     """
     
     headers = ['Project', 'Branch', 'Last Committer', 'Last Commit Date', 
-               'Protected', 'Merged Into', 'MR']
+               'Protected', 'Merged Into', 'MR', 'MR State']
     
     # Create Jinja2 environment and template
     env = jinja2.Environment()
