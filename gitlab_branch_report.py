@@ -80,6 +80,9 @@ def get_details_of_all_branches_of_project(project):
                 details['merge_request'] if details['merge_request'] else ''
             ])
 
+    # Sort branch data by commit date (oldest first)
+    branch_data.sort(key=lambda x: datetime.strptime(x[3], '%Y-%m-%d %H:%M:%S'))
+
     return branch_data
 
 def get_all_projects_of_group(gl, group):
