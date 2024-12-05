@@ -58,6 +58,30 @@ def get_branch_details(project, branch_name):
         print(f"Error getting branch details: {e}")
         return None
 
+def get_details_of_all_branches_of_project(project):
+
+    branch_data = []
+
+    # Get all branches
+    branches = project.branches.list(all=True)
+    
+    for branch in branches:
+        print(f"Processing branch: {branch.name}")
+        details = get_branch_details(project, branch.name)
+    
+        if details:
+            branch_data.append([
+                f"<A HREF='{project.web_url}' TARGET='_blank'>{project.path_with_namespace}</A>",
+                f"<A HREF='{project.web_url}/tree/{branch.name}' TARGET='_blank'>{branch.name}</A>",
+                details['last_commit_author'],
+                details['last_commit_date'].strftime('%Y-%m-%d %H:%M:%S'),
+                'Yes' if details['is_protected'] else 'No',
+                details['merged_into'] if details['merged_into'] else '',
+                details['merge_request'] if details['merge_request'] else ''
+            ])
+
+    return branch_data
+
 def get_all_projects_of_group(gl, group):
     """Recursively get all projects from a group and its subgroups."""
     print(f"Getting projects from group: {group.full_path}")
@@ -255,25 +279,8 @@ def main():
             # Get the full project object
             proj = gl.projects.get(project.id)
             print(f"\nProcessing project: {proj.path_with_namespace}")
-            
-            # Get all branches
-            branches = proj.branches.list(all=True)
-            
-            for branch in branches:
-                print(f"Processing branch: {branch.name}")
-                details = get_branch_details(proj, branch.name)
-                
-                if details:
-                    report_data.append([
-                        f"<A HREF='{proj.web_url}' TARGET='_blank'>{proj.path_with_namespace}</A>",
-                        f"<A HREF='{proj.web_url}/tree/{branch.name}' TARGET='_blank'>{branch.name}</A>",
-                        details['last_commit_author'],
-                        details['last_commit_date'].strftime('%Y-%m-%d %H:%M:%S'),
-                        'Yes' if details['is_protected'] else 'No',
-                        details['merged_into'] if details['merged_into'] else '',
-                        details['merge_request'] if details['merge_request'] else ''
-                    ])
-        
+            report_data.extend(get_details_of_all_branches_of_project(proj))
+
         # Generate HTML report and open it in browser
         output_file = generate_html_report(report_data, path)
         print(f"\nReport generated successfully: {output_file}")

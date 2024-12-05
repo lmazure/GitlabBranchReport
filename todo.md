@@ -1,7 +1,3 @@
-- Crash on `python gitlab_branch_report.py henixdevelopment/squash/squash-tm`
-- ~~The project name should be a hyperlink~~
-- ~~The branch name should be a hyperlink~~
-- ~~The MR should be a hyperlink~~
-- Add branch creation date
-- Add branch creation author
-- ~~Some projects generate a 403, e.g. `henixdevelopment/sandbox/sandbox-projet/squash-tm-mirror`~~
+- Display committer rather than author of last commit
+- Add filter on last commit date (60 days by default)
+- Add filter to not display protected branches (on by default)
