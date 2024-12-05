@@ -286,6 +286,24 @@ def generate_html_report(report_data, path_name):
             background-color: #8250df;
             color: white;
         }
+        .date-cell {
+            position: relative;
+        }
+        .date-cell .date-only {
+            display: inline-block;
+        }
+        .date-cell .full-datetime {
+            display: none;
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 2px 2px;
+            font-size: smaller;
+            transform: translateY(-80%);
+        }
+        .date-cell:hover .full-datetime {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -321,7 +339,10 @@ def generate_html_report(report_data, path_name):
                     <td class="project-cell">{{ row[0] }}</td>
                     <td class="branch-cell">{{ row[1] }}</td>
                     <td>{{ row[2] }}</td>
-                    <td>{{ row[3] }}</td>
+                    <td class="date-cell">
+                        <span class="date-only">{{ row[3].split(' ')[0] }}</span>
+                        <span class="full-datetime">{{ row[3] }}</span>
+                    </td>
                     <td>{{ row[4] }}</td>
                     <td>{{ row[5] }}</td>
                     <td>{{ row[6] }}</td>
@@ -384,6 +405,15 @@ def generate_html_report(report_data, path_name):
         // Function to apply age filter to all rows
         function applyAgeFilterToAll() {
             document.querySelectorAll('tbody tr').forEach(applyAgeFilter);
+        }
+
+        // Function to format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return {
+                dateOnly: date.toISOString().split('T')[0],
+                fullDateTime: date.toLocaleString()
+            };
         }
 
         // Set up event listeners
