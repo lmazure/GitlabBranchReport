@@ -1,2 +1,1 @@
-- Add filter on last commit date (60 days by default)
 - Display status of the Merge Request associated with each branch

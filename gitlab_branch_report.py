@@ -172,6 +172,22 @@ def generate_html_report(report_data, path_name):
         .checkbox-label input[type="checkbox"] {
             margin-right: 8px;
         }
+        .age-filter {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        .age-filter input[type="number"] {
+            width: 70px;
+            margin: 0 8px;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .age-filter input[type="number"]:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -233,6 +249,14 @@ def generate_html_report(report_data, path_name):
                 <input type="checkbox" id="hideProtectedBranches" checked>
                 Hide protected branches
             </label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="hideYoungBranches" checked>
+                Only show branches older than
+            </label>
+            <span class="age-filter">
+                <input type="number" id="minAge" value="90" min="1">
+                days
+            </span>
         </div>
         <table>
             <thead>
@@ -244,7 +268,9 @@ def generate_html_report(report_data, path_name):
             </thead>
             <tbody>
                 {% for row in data %}
-                <tr class="{{ 'protected-branch' if row[4] == 'Yes' }}" style="{{ 'display: none;' if row[4] == 'Yes' }}">
+                <tr class="{{ 'protected-branch' if row[4] == 'Yes' }}" 
+                    data-commit-date="{{ row[3] }}"
+                    style="{{ 'display: none;' if row[4] == 'Yes' }}">
                     <td class="project-path">{{ row[0] }}</td>
                     {% for cell in row[1:] %}
                     <td>{{ cell }}</td>
@@ -263,16 +289,63 @@ def generate_html_report(report_data, path_name):
             const protectedBranches = document.querySelectorAll('.protected-branch');
             protectedBranches.forEach(row => {
                 row.style.display = hide ? 'none' : '';
+                // Re-apply age filter if it's active
+                if (!hide && document.getElementById('hideYoungBranches').checked) {
+                    applyAgeFilter(row);
+                }
             });
         }
 
-        // Set up checkbox event listener
+        // Function to check if a date is within the specified number of days
+        function isWithinDays(dateStr, days) {
+            const commitDate = new Date(dateStr);
+            const now = new Date();
+            const diffTime = Math.abs(now - commitDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays >= days;
+        }
+
+        // Function to apply age filter to a single row
+        function applyAgeFilter(row) {
+            if (!document.getElementById('hideYoungBranches').checked) {
+                row.style.display = row.classList.contains('protected-branch') && 
+                                  document.getElementById('hideProtectedBranches').checked ? 
+                                  'none' : '';
+                return;
+            }
+
+            const minAge = parseInt(document.getElementById('minAge').value, 10);
+            const commitDate = row.getAttribute('data-commit-date');
+            const isProtected = row.classList.contains('protected-branch');
+            const hideProtected = document.getElementById('hideProtectedBranches').checked;
+
+            if ((isProtected && hideProtected) || !isWithinDays(commitDate, minAge)) {
+                row.style.display = 'none';
+            } else {
+                row.style.display = '';
+            }
+        }
+
+        // Function to apply age filter to all rows
+        function applyAgeFilterToAll() {
+            document.querySelectorAll('tbody tr').forEach(applyAgeFilter);
+        }
+
+        // Set up event listeners
         document.getElementById('hideProtectedBranches').addEventListener('change', function(e) {
             toggleProtectedBranches(e.target.checked);
         });
 
-        // Hide protected branches on page load (checkbox is checked by default)
+        document.getElementById('hideYoungBranches').addEventListener('change', function(e) {
+            document.getElementById('minAge').disabled = !e.target.checked;
+            applyAgeFilterToAll();
+        });
+
+        document.getElementById('minAge').addEventListener('input', applyAgeFilterToAll);
+
+        // Initial setup
         toggleProtectedBranches(true);
+        applyAgeFilterToAll();
     </script>
 </body>
 </html>
