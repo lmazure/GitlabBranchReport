@@ -1,0 +1,2 @@
+- add filter to hide archived projects
+- add filter to hide 'archive' groups

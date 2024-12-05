@@ -29,11 +29,22 @@ For each branch, the report includes:
 
 ## Usage
 
+For all projects in a GitLab group:
 ```bash
 python gitlab_branch_report.py <group-path>
 ```
+where `<group-path>` is the path of your GitLab group (as it appears in the URL).
 
-Where `<group-path>` is the path of your GitLab group (as it appears in the URL).
+For a single project:
+```bash
+python gitlab_branch_report.py <mygroup/myproject>
+```
+where `<mygroup/myproject>` is the path of your GitLab project (as it appears in the URL).
+
+Add the `-d` flag to open the report in a browser after generation:
+```bash
+python gitlab_branch_report.py <group-path> -d
+```
 
 ## Output
 

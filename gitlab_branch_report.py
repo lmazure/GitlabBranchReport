@@ -82,6 +82,7 @@ def get_details_of_all_branches_of_project(project):
     
         if details:
             branch_data.append([
+                'Yes' if project.archived else 'No',
                 f"<A HREF='{project.web_url}' TARGET='_blank'>{project.path_with_namespace}</A>",
                 f"<A HREF='{project.web_url}/tree/{branch.name}' TARGET='_blank'>{branch.name}</A>",
                 details['last_committer'],
@@ -93,7 +94,7 @@ def get_details_of_all_branches_of_project(project):
             ])
 
     # Sort branch data by commit date (oldest first)
-    branch_data.sort(key=lambda x: datetime.strptime(x[3], '%Y-%m-%d %H:%M:%S'))
+    branch_data.sort(key=lambda x: datetime.strptime(x[4], '%Y-%m-%d %H:%M:%S'))
 
     return branch_data
 
@@ -210,12 +211,12 @@ def generate_html_report(report_data, path_name):
             white-space: nowrap;
         }
         /* Column widths */
-        th:nth-child(1), td:nth-child(1) { /* Project column */
+        th:nth-child(2), td:nth-child(2) { /* Project column */
             width: 30%;
             direction: rtl;
             text-align: left;
         }
-        th:nth-child(2), td:nth-child(2) { /* Branch column */
+        th:nth-child(3), td:nth-child(3) { /* Branch column */
             width: 25%;
             direction: ltr;
             text-align: left;
@@ -333,24 +334,26 @@ def generate_html_report(report_data, path_name):
             </thead>
             <tbody>
                 {% for row in data %}
-                <tr class="{{ 'protected-branch' if row[4] == 'Yes' }}" 
-                    data-commit-date="{{ row[3] }}"
-                    style="{{ 'display: none;' if row[4] == 'Yes' }}">
-                    <td class="project-cell">{{ row[0] }}</td>
-                    <td class="branch-cell">{{ row[1] }}</td>
+                <tr class="{{ 'protected-branch' if row[5] == 'Yes' }}" 
+                    data-commit-date="{{ row[4] }}"
+                    style="{{ 'display: none;' if row[5] == 'Yes' }}">
+                    <td>{{ row[0] }}</td>
+                    <td class="project-cell">{{ row[1] }}</td>
+                    <td class="branch-cell">{{ row[2] }}</td>
                     <td>{{ row[2] }}</td>
                     <td class="date-cell">
-                        <span class="date-only">{{ row[3].split(' ')[0] }}</span>
-                        <span class="full-datetime">{{ row[3] }}</span>
+                        <span class="date-only">{{ row[4].split(' ')[0] }}</span>
+                        <span class="full-datetime">{{ row[4] }}</span>
                     </td>
-                    <td>{{ row[4] }}</td>
                     <td>{{ row[5] }}</td>
                     <td>{{ row[6] }}</td>
+                    <td>{{ row[7] }}</td>
                     <td>
-                        {% if row[7] %}
-                        <span class="mr-state mr-state-{{ row[7] }}">{{ row[7] }}</span>
+                        {% if row[8] %}
+                        <span class="mr-state mr-state-{{ row[8] }}">{{ row[8] }}</span>
                         {% endif %}
                     </td>
+                    <td>{{ row[9] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -436,7 +439,7 @@ def generate_html_report(report_data, path_name):
 </html>
     """
     
-    headers = ['Project', 'Branch', 'Last Committer', 'Last Commit Date', 
+    headers = ['Arc.', 'Project', 'Branch', 'Last Committer', 'Last Commit Date', 
                'Protected', 'Merged Into', 'MR', 'MR State']
     
     # Create Jinja2 environment and template
