@@ -321,6 +321,10 @@ def generate_html_report(report_data, path_name):
                 Hide protected branches
             </label>
             <label class="checkbox-label">
+                <input type="checkbox" id="hideArchivedProjects" checked>
+                Hide archived projects
+            </label>
+            <label class="checkbox-label">
                 <input type="checkbox" id="hideYoungBranches" checked>
                 Only show branches older than
             </label>
@@ -368,77 +372,51 @@ def generate_html_report(report_data, path_name):
         </div>
     </div>
     <script>
-        // Function to toggle protected branches visibility
-        function toggleProtectedBranches(hide) {
-            const protectedBranches = document.querySelectorAll('.protected-branch');
-            protectedBranches.forEach(row => {
-                row.style.display = hide ? 'none' : '';
-                // Re-apply age filter if it's active
-                if (!hide && document.getElementById('hideYoungBranches').checked) {
-                    applyAgeFilter(row);
+        document.addEventListener('DOMContentLoaded', function() {
+            const hideProtectedCheckbox = document.getElementById('hideProtectedBranches');
+            const hideArchivedCheckbox = document.getElementById('hideArchivedProjects');
+            const hideYoungCheckbox = document.getElementById('hideYoungBranches');
+            const minAgeInput = document.getElementById('minAge');
+            const rows = document.querySelectorAll('tbody tr');
+
+            function updateVisibility() {
+                const hideProtected = hideProtectedCheckbox.checked;
+                const hideArchived = hideArchivedCheckbox.checked;
+                const hideYoung = hideYoungCheckbox.checked;
+                const minAgeDays = parseInt(minAgeInput.value);
+                const now = new Date();
+
+                rows.forEach(row => {
+                    const isProtected = row.classList.contains('protected-branch');
+                    const isArchived = row.cells[0].textContent.trim() === 'Yes';
+                    const commitDate = new Date(row.getAttribute('data-commit-date'));
+                    const ageDays = (now - commitDate) / (1000 * 60 * 60 * 24);
+
+                    const shouldHide = 
+                        (hideProtected && isProtected) ||
+                        (hideArchived && isArchived) ||
+                        (hideYoung && ageDays < minAgeDays);
+
+                    row.style.display = shouldHide ? 'none' : '';
+                });
+            }
+
+            hideProtectedCheckbox.addEventListener('change', updateVisibility);
+            hideArchivedCheckbox.addEventListener('change', updateVisibility);
+            hideYoungCheckbox.addEventListener('change', updateVisibility);
+            minAgeInput.addEventListener('input', updateVisibility);
+            minAgeInput.disabled = !hideYoungCheckbox.checked;
+
+            hideYoungCheckbox.addEventListener('change', function() {
+                minAgeInput.disabled = !this.checked;
+                if (this.checked) {
+                    updateVisibility();
                 }
             });
-        }
 
-        // Function to check if a date is within the specified number of days
-        function isWithinDays(dateStr, days) {
-            const commitDate = new Date(dateStr);
-            const now = new Date();
-            const diffTime = Math.abs(now - commitDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays >= days;
-        }
-
-        // Function to apply age filter to a single row
-        function applyAgeFilter(row) {
-            if (!document.getElementById('hideYoungBranches').checked) {
-                row.style.display = row.classList.contains('protected-branch') && 
-                                  document.getElementById('hideProtectedBranches').checked ? 
-                                  'none' : '';
-                return;
-            }
-
-            const minAge = parseInt(document.getElementById('minAge').value, 10);
-            const commitDate = row.getAttribute('data-commit-date');
-            const isProtected = row.classList.contains('protected-branch');
-            const hideProtected = document.getElementById('hideProtectedBranches').checked;
-
-            if ((isProtected && hideProtected) || !isWithinDays(commitDate, minAge)) {
-                row.style.display = 'none';
-            } else {
-                row.style.display = '';
-            }
-        }
-
-        // Function to apply age filter to all rows
-        function applyAgeFilterToAll() {
-            document.querySelectorAll('tbody tr').forEach(applyAgeFilter);
-        }
-
-        // Function to format date
-        function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            return {
-                dateOnly: date.toISOString().split('T')[0],
-                fullDateTime: date.toLocaleString()
-            };
-        }
-
-        // Set up event listeners
-        document.getElementById('hideProtectedBranches').addEventListener('change', function(e) {
-            toggleProtectedBranches(e.target.checked);
+            // Initial visibility update
+            updateVisibility();
         });
-
-        document.getElementById('hideYoungBranches').addEventListener('change', function(e) {
-            document.getElementById('minAge').disabled = !e.target.checked;
-            applyAgeFilterToAll();
-        });
-
-        document.getElementById('minAge').addEventListener('input', applyAgeFilterToAll);
-
-        // Initial setup
-        toggleProtectedBranches(true);
-        applyAgeFilterToAll();
     </script>
 </body>
 </html>
