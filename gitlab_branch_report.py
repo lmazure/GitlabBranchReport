@@ -340,7 +340,7 @@ def generate_html_report(report_data, path_name):
                     <td>{{ row[0] }}</td>
                     <td class="project-cell">{{ row[1] }}</td>
                     <td class="branch-cell">{{ row[2] }}</td>
-                    <td>{{ row[2] }}</td>
+                    <td>{{ row[3] }}</td>
                     <td class="date-cell">
                         <span class="date-only">{{ row[4].split(' ')[0] }}</span>
                         <span class="full-datetime">{{ row[4] }}</span>
@@ -353,7 +353,6 @@ def generate_html_report(report_data, path_name):
                         <span class="mr-state mr-state-{{ row[8] }}">{{ row[8] }}</span>
                         {% endif %}
                     </td>
-                    <td>{{ row[9] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
