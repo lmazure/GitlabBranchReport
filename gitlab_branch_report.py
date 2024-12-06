@@ -90,7 +90,8 @@ def get_details_of_all_branches_of_project(project):
                 'Yes' if details['is_protected'] else 'No',
                 details['merged_into'] if details['merged_into'] else '',
                 details['merge_request'] if details['merge_request'] else '',
-                details['mr_state'] if details['mr_state'] else ''
+                details['mr_state'] if details['mr_state'] else '',
+                f"<A HREF='{project.web_url}/-/branches?state=all&search={branch.name}' TARGET='_blank'>⤳</A>"
             ])
 
     # Sort branch data by commit date (oldest first)
@@ -220,6 +221,10 @@ def generate_html_report(report_data, path_name):
             width: 25%;
             direction: ltr;
             text-align: left;
+        }
+        th:last-child, td:last-child { /* Arrow column */
+            width: 30px;
+            text-align: center;
         }
         .project-cell {
             direction: rtl;
@@ -353,6 +358,7 @@ def generate_html_report(report_data, path_name):
                         <span class="mr-state mr-state-{{ row[8] }}">{{ row[8] }}</span>
                         {% endif %}
                     </td>
+                    <td>{{ row[9] | safe }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -439,7 +445,7 @@ def generate_html_report(report_data, path_name):
     """
     
     headers = ['Arc.', 'Project', 'Branch', 'Last Committer', 'Last Commit Date', 
-               'Protected', 'Merged Into', 'MR', 'MR State']
+               'Protected', 'Merged Into', 'MR', 'MR State', 'Branch Link']
     
     # Create Jinja2 environment and template
     env = jinja2.Environment()
