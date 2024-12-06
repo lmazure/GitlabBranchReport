@@ -41,7 +41,7 @@ def get_branch_details(project, branch_name):
         last_commit_date = parser.parse(commit['committed_date'])
         
         # Get merge requests associated with this branch
-        mrs = project.mergerequests.list(source_branch=branch_name, state='all')
+        mrs = project.mergerequests.list(source_branch=branch_name, state='all', get_all=True)
         mr_info = None
         mr_state = None
         merged_into = None
@@ -317,12 +317,16 @@ def generate_html_report(report_data, path_name):
         <h1>GitLab Branch Report - {{ path_name }}</h1>
         <div class="controls">
             <label class="checkbox-label">
-                <input type="checkbox" id="hideProtectedBranches" checked>
-                Hide protected branches
-            </label>
-            <label class="checkbox-label">
                 <input type="checkbox" id="hideArchivedProjects" checked>
                 Hide archived projects
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="hideArchiveGroups" checked>
+                Hide "archive" groups
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="hideProtectedBranches" checked>
+                Hide protected branches
             </label>
             <label class="checkbox-label">
                 <input type="checkbox" id="hideYoungBranches" checked>
@@ -375,6 +379,7 @@ def generate_html_report(report_data, path_name):
         document.addEventListener('DOMContentLoaded', function() {
             const hideProtectedCheckbox = document.getElementById('hideProtectedBranches');
             const hideArchivedCheckbox = document.getElementById('hideArchivedProjects');
+            const hideArchiveGroupsCheckbox = document.getElementById('hideArchiveGroups');
             const hideYoungCheckbox = document.getElementById('hideYoungBranches');
             const minAgeInput = document.getElementById('minAge');
             const rows = document.querySelectorAll('tbody tr');
@@ -382,6 +387,7 @@ def generate_html_report(report_data, path_name):
             function updateVisibility() {
                 const hideProtected = hideProtectedCheckbox.checked;
                 const hideArchived = hideArchivedCheckbox.checked;
+                const hideArchiveGroups = hideArchiveGroupsCheckbox.checked;
                 const hideYoung = hideYoungCheckbox.checked;
                 const minAgeDays = parseInt(minAgeInput.value);
                 const now = new Date();
@@ -389,12 +395,14 @@ def generate_html_report(report_data, path_name):
                 rows.forEach(row => {
                     const isProtected = row.classList.contains('protected-branch');
                     const isArchived = row.cells[0].textContent.trim() === 'Yes';
+                    const isArchiveGroup = row.cells[1].querySelector('a').getAttribute('href').includes('/archive/');
                     const commitDate = new Date(row.getAttribute('data-commit-date'));
                     const ageDays = (now - commitDate) / (1000 * 60 * 60 * 24);
 
                     const shouldHide = 
                         (hideProtected && isProtected) ||
                         (hideArchived && isArchived) ||
+                        (hideArchiveGroups && isArchiveGroup) ||
                         (hideYoung && ageDays < minAgeDays);
 
                     row.style.display = shouldHide ? 'none' : '';
@@ -403,6 +411,7 @@ def generate_html_report(report_data, path_name):
 
             hideProtectedCheckbox.addEventListener('change', updateVisibility);
             hideArchivedCheckbox.addEventListener('change', updateVisibility);
+            hideArchiveGroupsCheckbox.addEventListener('change', updateVisibility);
             hideYoungCheckbox.addEventListener('change', updateVisibility);
             minAgeInput.addEventListener('input', updateVisibility);
             minAgeInput.disabled = !hideYoungCheckbox.checked;
