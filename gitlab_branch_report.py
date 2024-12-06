@@ -445,7 +445,7 @@ def generate_html_report(report_data, path_name):
     """
     
     headers = ['Arc.', 'Project', 'Branch', 'Last Committer', 'Last Commit Date', 
-               'Protected', 'Merged Into', 'MR', 'MR State', 'Branch Link']
+               'Protected', 'Merged Into', 'MR', 'MR State', '']
     
     # Create Jinja2 environment and template
     env = jinja2.Environment()
