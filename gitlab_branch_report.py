@@ -107,11 +107,17 @@ def get_all_projects_of_group(gl, group):
     
     # Get direct projects from this group
     try:
-        groups = group.projects.list(all=True)
+        direct_projects = group.projects.list(all=True)
+        shared_projects = group.shared_projects.list(all=True)
     except gitlab.exceptions.GitlabError as e:
         print(f"Error getting projects of group {group.full_path}: {e}", flush=True)
         sys.exit(1)
-    projects.extend(groups)
+    for project in direct_projects:
+        if project in shared_projects:
+            print(f"  Skipping shared project: {project.path_with_namespace}", flush=True)
+        else:
+            print(f"  Got project: {project.path_with_namespace}", flush=True)
+            projects.append(project)
     
     # Get subgroups and their projects
     try:
