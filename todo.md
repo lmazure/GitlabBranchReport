@@ -1,0 +1,1 @@
+- understand why getting branch from a mirrored project (in `henixdevelopment/open-source/squash`) returns 403

@@ -331,6 +331,14 @@ def generate_html_report(report_data, path_name):
                 Hide "archive" groups
             </label>
             <label class="checkbox-label">
+                <input type="checkbox" id="hideMirrorGroup" checked>
+                Hide "henixdevelopment/open-source/squash" group
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="hideSandboxGroup">
+                Hide "henixdevelopment/sandbox" group
+            </label>
+            <label class="checkbox-label">
                 <input type="checkbox" id="hideProtectedBranches" checked>
                 Hide protected branches
             </label>
@@ -386,6 +394,8 @@ def generate_html_report(report_data, path_name):
             const hideProtectedCheckbox = document.getElementById('hideProtectedBranches');
             const hideArchivedCheckbox = document.getElementById('hideArchivedProjects');
             const hideArchiveGroupsCheckbox = document.getElementById('hideArchiveGroups');
+            const hideMirrorGroupCheckbox = document.getElementById('hideMirrorGroup');
+            const hideSandboxGroupCheckbox = document.getElementById('hideSandboxGroup');
             const hideYoungCheckbox = document.getElementById('hideYoungBranches');
             const minAgeInput = document.getElementById('minAge');
             const rows = document.querySelectorAll('tbody tr');
@@ -394,6 +404,8 @@ def generate_html_report(report_data, path_name):
                 const hideProtected = hideProtectedCheckbox.checked;
                 const hideArchived = hideArchivedCheckbox.checked;
                 const hideArchiveGroups = hideArchiveGroupsCheckbox.checked;
+                const hideMirrorGroup = hideMirrorGroupCheckbox.checked;
+                const hideSandboxGroup = hideSandboxGroupCheckbox.checked;
                 const hideYoung = hideYoungCheckbox.checked;
                 const minAgeDays = parseInt(minAgeInput.value);
                 const now = new Date();
@@ -402,6 +414,8 @@ def generate_html_report(report_data, path_name):
                     const isProtected = row.classList.contains('protected-branch');
                     const isArchived = row.cells[0].textContent.trim() === 'Yes';
                     const isArchiveGroup = row.cells[1].querySelector('a').getAttribute('href').includes('/archive/');
+                    const isMirrorGroup = row.cells[1].querySelector('a').getAttribute('href').includes('/henixdevelopment/open-source/squash/');
+                    const isSandboxGroup = row.cells[1].querySelector('a').getAttribute('href').includes('/henixdevelopment/sandbox/');
                     const commitDate = new Date(row.getAttribute('data-commit-date'));
                     const ageDays = (now - commitDate) / (1000 * 60 * 60 * 24);
 
@@ -409,6 +423,8 @@ def generate_html_report(report_data, path_name):
                         (hideProtected && isProtected) ||
                         (hideArchived && isArchived) ||
                         (hideArchiveGroups && isArchiveGroup) ||
+                        (hideMirrorGroup && isMirrorGroup) ||
+                        (hideSandboxGroup && isSandboxGroup) ||
                         (hideYoung && ageDays < minAgeDays);
 
                     row.style.display = shouldHide ? 'none' : '';
@@ -418,6 +434,8 @@ def generate_html_report(report_data, path_name):
             hideProtectedCheckbox.addEventListener('change', updateVisibility);
             hideArchivedCheckbox.addEventListener('change', updateVisibility);
             hideArchiveGroupsCheckbox.addEventListener('change', updateVisibility);
+            hideMirrorGroupCheckbox.addEventListener('change', updateVisibility);
+            hideSandboxGroupCheckbox.addEventListener('change', updateVisibility);
             hideYoungCheckbox.addEventListener('change', updateVisibility);
             minAgeInput.addEventListener('input', updateVisibility);
             minAgeInput.disabled = !hideYoungCheckbox.checked;
